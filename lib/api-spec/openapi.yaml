@@ -1,22 +1,47 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Dasmesh Stock Management System API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User management
+  - name: stockMaster
+    description: Stock master records
+  - name: openingStock
+    description: Opening stock migration
+  - name: production
+    description: Daily production entries
+  - name: dispatch
+    description: Daily dispatch entries
+  - name: stockRegister
+    description: Daily stock register
+  - name: stockLedger
+    description: Stock ledger per item
+  - name: stockSummary
+    description: Stock summary and dashboard
+  - name: reports
+    description: Advanced reporting
+  - name: auditLogs
+    description: Audit log history
+  - name: notifications
+    description: Notification system
+  - name: backup
+    description: Backup management
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +49,955 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          description: Password changed
+
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Reset password (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordInput"
+      responses:
+        "200":
+          description: Password reset
+
+  # USERS
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # STOCK MASTER
+  /stock-master:
+    get:
+      operationId: listStockItems
+      tags: [stockMaster]
+      summary: List all stock master items
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of stock items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockItem"
+    post:
+      operationId: createStockItem
+      tags: [stockMaster]
+      summary: Create a stock item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockItem"
+
+  /stock-master/{id}:
+    get:
+      operationId: getStockItem
+      tags: [stockMaster]
+      summary: Get a stock item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Stock item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockItem"
+    patch:
+      operationId: updateStockItem
+      tags: [stockMaster]
+      summary: Update a stock item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockItem"
+    delete:
+      operationId: deleteStockItem
+      tags: [stockMaster]
+      summary: Delete a stock item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /stock-master/categories:
+    get:
+      operationId: listCategories
+      tags: [stockMaster]
+      summary: List all distinct categories
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  # OPENING STOCK
+  /opening-stock:
+    get:
+      operationId: listOpeningStock
+      tags: [openingStock]
+      summary: List opening stock balances
+      responses:
+        "200":
+          description: Opening stock list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OpeningStockEntry"
+    post:
+      operationId: setOpeningStock
+      tags: [openingStock]
+      summary: Set opening stock for an item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpeningStockInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpeningStockEntry"
+
+  /opening-stock/import:
+    post:
+      operationId: importOpeningStock
+      tags: [openingStock]
+      summary: Import opening stock from CSV/Excel data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpeningStockImport"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+
+  # PRODUCTION ENTRIES
+  /production:
+    get:
+      operationId: listProduction
+      tags: [production]
+      summary: List production entries
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: stockItemId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Production entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductionEntry"
+    post:
+      operationId: createProduction
+      tags: [production]
+      summary: Create a production entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionEntry"
+
+  /production/{id}:
+    get:
+      operationId: getProduction
+      tags: [production]
+      summary: Get a production entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Production entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionEntry"
+    patch:
+      operationId: updateProduction
+      tags: [production]
+      summary: Update a production entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductionUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductionEntry"
+    delete:
+      operationId: deleteProduction
+      tags: [production]
+      summary: Delete a production entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # DISPATCH ENTRIES
+  /dispatch:
+    get:
+      operationId: listDispatch
+      tags: [dispatch]
+      summary: List dispatch entries
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: stockItemId
+          in: query
+          schema:
+            type: integer
+        - name: partyName
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dispatch entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DispatchEntry"
+    post:
+      operationId: createDispatch
+      tags: [dispatch]
+      summary: Create a dispatch entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DispatchInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispatchEntry"
+
+  /dispatch/{id}:
+    get:
+      operationId: getDispatch
+      tags: [dispatch]
+      summary: Get a dispatch entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dispatch entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispatchEntry"
+    patch:
+      operationId: updateDispatch
+      tags: [dispatch]
+      summary: Update a dispatch entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DispatchUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispatchEntry"
+    delete:
+      operationId: deleteDispatch
+      tags: [dispatch]
+      summary: Delete a dispatch entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # STOCK REGISTER
+  /stock-register:
+    get:
+      operationId: getStockRegister
+      tags: [stockRegister]
+      summary: Get daily stock register (Excel-style view)
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: size
+          in: query
+          schema:
+            type: string
+        - name: length
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Stock register rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockRegisterRow"
+
+  # STOCK LEDGER
+  /stock-ledger:
+    get:
+      operationId: getStockLedger
+      tags: [stockLedger]
+      summary: Get full stock ledger for an item
+      parameters:
+        - name: stockItemId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Stock ledger rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StockLedgerRow"
+
+  # STOCK SUMMARY (dashboard)
+  /stock-summary:
+    get:
+      operationId: getStockSummary
+      tags: [stockSummary]
+      summary: Get today's stock summary for dashboard
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Stock summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockSummary"
+
+  /stock-summary/low-stock:
+    get:
+      operationId: getLowStockItems
+      tags: [stockSummary]
+      summary: Get items with low stock
+      responses:
+        "200":
+          description: Low stock items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LowStockItem"
+
+  /stock-summary/top-produced:
+    get:
+      operationId: getTopProducedItems
+      tags: [stockSummary]
+      summary: Get top produced items this month
+      responses:
+        "200":
+          description: Top produced
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopItem"
+
+  /stock-summary/top-dispatched:
+    get:
+      operationId: getTopDispatchedItems
+      tags: [stockSummary]
+      summary: Get top dispatched items this month
+      responses:
+        "200":
+          description: Top dispatched
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopItem"
+
+  /stock-summary/monthly-trend:
+    get:
+      operationId: getMonthlyTrend
+      tags: [stockSummary]
+      summary: Get monthly production and dispatch trend (last 12 months)
+      responses:
+        "200":
+          description: Monthly trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyTrend"
+
+  /stock-summary/category-breakdown:
+    get:
+      operationId: getCategoryBreakdown
+      tags: [stockSummary]
+      summary: Get stock breakdown by category
+      responses:
+        "200":
+          description: Category breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryBreakdown"
+
+  # REPORTS
+  /reports/daily:
+    get:
+      operationId: getDailyReport
+      tags: [reports]
+      summary: Get daily stock report
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Daily report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyReport"
+
+  /reports/monthly:
+    get:
+      operationId: getMonthlyReport
+      tags: [reports]
+      summary: Get monthly stock report
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Monthly report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyReport"
+
+  /reports/category:
+    get:
+      operationId: getCategoryReport
+      tags: [reports]
+      summary: Get category-wise stock report
+      parameters:
+        - name: fromDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Category report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryReport"
+
+  /reports/production-summary:
+    get:
+      operationId: getProductionSummaryReport
+      tags: [reports]
+      summary: Get production summary report
+      parameters:
+        - name: fromDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Production summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductionSummaryRow"
+
+  /reports/dispatch-summary:
+    get:
+      operationId: getDispatchSummaryReport
+      tags: [reports]
+      summary: Get dispatch summary report
+      parameters:
+        - name: fromDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Dispatch summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DispatchSummaryRow"
+
+  # AUDIT LOGS
+  /audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [auditLogs]
+      summary: List audit logs
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogPage"
+
+  # NOTIFICATIONS
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current user
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked as read
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked as read
+
+  # BACKUP
+  /backup:
+    get:
+      operationId: listBackups
+      tags: [backup]
+      summary: List backup records
+      responses:
+        "200":
+          description: Backup logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BackupLog"
+    post:
+      operationId: triggerBackup
+      tags: [backup]
+      summary: Trigger a manual backup
+      responses:
+        "200":
+          description: Backup result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupLog"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +1005,645 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    # AUTH
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    ResetPasswordInput:
+      type: object
+      required: [userId, newPassword]
+      properties:
+        userId:
+          type: integer
+        newPassword:
+          type: string
+
+    # USERS
+    User:
+      type: object
+      required: [id, name, username, email, role, status]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        mobile:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [admin, production, dispatch, viewer]
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserInput:
+      type: object
+      required: [name, username, email, password, role]
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        mobile:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [admin, production, dispatch, viewer]
+        status:
+          type: string
+          enum: [active, inactive]
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        mobile:
+          type: string
+        role:
+          type: string
+          enum: [admin, production, dispatch, viewer]
+        status:
+          type: string
+          enum: [active, inactive]
+
+    # STOCK MASTER
+    StockItem:
+      type: object
+      required: [id, itemCode, category, size, length, unit, status]
+      properties:
+        id:
+          type: integer
+        itemCode:
+          type: string
+        category:
+          type: string
+        size:
+          type: string
+        length:
+          type: string
+        unit:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+
+    StockItemInput:
+      type: object
+      required: [category, size, length, unit]
+      properties:
+        category:
+          type: string
+        size:
+          type: string
+        length:
+          type: string
+        unit:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    StockItemUpdate:
+      type: object
+      properties:
+        category:
+          type: string
+        size:
+          type: string
+        length:
+          type: string
+        unit:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    # OPENING STOCK
+    OpeningStockEntry:
+      type: object
+      required: [id, stockItemId, quantity, effectiveDate]
+      properties:
+        id:
+          type: integer
+        stockItemId:
+          type: integer
+        stockItem:
+          $ref: "#/components/schemas/StockItem"
+        quantity:
+          type: number
+        effectiveDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+
+    OpeningStockInput:
+      type: object
+      required: [stockItemId, quantity, effectiveDate]
+      properties:
+        stockItemId:
+          type: integer
+        quantity:
+          type: number
+        effectiveDate:
+          type: string
+          format: date
+
+    OpeningStockImport:
+      type: object
+      required: [effectiveDate, rows]
+      properties:
+        effectiveDate:
+          type: string
+          format: date
+        rows:
+          type: array
+          items:
+            type: object
+            required: [itemCode, quantity]
+            properties:
+              itemCode:
+                type: string
+              quantity:
+                type: number
+
+    ImportResult:
+      type: object
+      required: [imported, skipped, errors]
+      properties:
+        imported:
+          type: integer
+        skipped:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+
+    # PRODUCTION
+    ProductionEntry:
+      type: object
+      required: [id, date, stockItemId, quantity]
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        stockItemId:
+          type: integer
+        stockItem:
+          $ref: "#/components/schemas/StockItem"
+        quantity:
+          type: number
+        remarks:
+          type: ["string", "null"]
+        createdById:
+          type: integer
+        createdByName:
+          type: ["string", "null"]
+        updatedById:
+          type: ["integer", "null"]
+        updatedByName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    ProductionInput:
+      type: object
+      required: [date, stockItemId, quantity]
+      properties:
+        date:
+          type: string
+          format: date
+        stockItemId:
+          type: integer
+        quantity:
+          type: number
+        remarks:
+          type: string
+
+    ProductionUpdate:
+      type: object
+      properties:
+        quantity:
+          type: number
+        remarks:
+          type: string
+
+    # DISPATCH
+    DispatchEntry:
+      type: object
+      required: [id, date, stockItemId, quantity, partyName]
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        stockItemId:
+          type: integer
+        stockItem:
+          $ref: "#/components/schemas/StockItem"
+        quantity:
+          type: number
+        partyName:
+          type: string
+        invoiceNumber:
+          type: ["string", "null"]
+        vehicleNumber:
+          type: ["string", "null"]
+        remarks:
+          type: ["string", "null"]
+        createdById:
+          type: integer
+        createdByName:
+          type: ["string", "null"]
+        updatedById:
+          type: ["integer", "null"]
+        updatedByName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    DispatchInput:
+      type: object
+      required: [date, stockItemId, quantity, partyName]
+      properties:
+        date:
+          type: string
+          format: date
+        stockItemId:
+          type: integer
+        quantity:
+          type: number
+        partyName:
+          type: string
+        invoiceNumber:
+          type: string
+        vehicleNumber:
+          type: string
+        remarks:
+          type: string
+
+    DispatchUpdate:
+      type: object
+      properties:
+        quantity:
+          type: number
+        partyName:
+          type: string
+        invoiceNumber:
+          type: string
+        vehicleNumber:
+          type: string
+        remarks:
+          type: string
+
+    # STOCK REGISTER
+    StockRegisterRow:
+      type: object
+      required: [stockItemId, category, size, length, unit, openingStock, production, dispatch, closingStock]
+      properties:
+        stockItemId:
+          type: integer
+        itemCode:
+          type: string
+        category:
+          type: string
+        size:
+          type: string
+        length:
+          type: string
+        unit:
+          type: string
+        openingStock:
+          type: number
+        production:
+          type: number
+        dispatch:
+          type: number
+        closingStock:
+          type: number
+
+    # STOCK LEDGER
+    StockLedgerRow:
+      type: object
+      required: [date, openingStock, production, dispatch, closingStock]
+      properties:
+        date:
+          type: string
+          format: date
+        openingStock:
+          type: number
+        production:
+          type: number
+        dispatch:
+          type: number
+        closingStock:
+          type: number
+
+    # STOCK SUMMARY
+    StockSummary:
+      type: object
+      required: [date, totalOpeningStock, totalProduction, totalDispatch, totalClosingStock, totalItems, lowStockCount]
+      properties:
+        date:
+          type: string
+          format: date
+        totalOpeningStock:
+          type: number
+        totalProduction:
+          type: number
+        totalDispatch:
+          type: number
+        totalClosingStock:
+          type: number
+        totalItems:
+          type: integer
+        lowStockCount:
+          type: integer
+        monthlyProduction:
+          type: number
+        monthlyDispatch:
+          type: number
+
+    LowStockItem:
+      type: object
+      required: [stockItemId, itemCode, category, size, length, currentStock]
+      properties:
+        stockItemId:
+          type: integer
+        itemCode:
+          type: string
+        category:
+          type: string
+        size:
+          type: string
+        length:
+          type: string
+        unit:
+          type: string
+        currentStock:
+          type: number
+
+    TopItem:
+      type: object
+      required: [stockItemId, itemCode, category, size, quantity]
+      properties:
+        stockItemId:
+          type: integer
+        itemCode:
+          type: string
+        category:
+          type: string
+        size:
+          type: string
+        length:
+          type: string
+        quantity:
+          type: number
+
+    MonthlyTrend:
+      type: object
+      required: [month, year, production, dispatch]
+      properties:
+        month:
+          type: integer
+        year:
+          type: integer
+        label:
+          type: string
+        production:
+          type: number
+        dispatch:
+          type: number
+
+    CategoryBreakdown:
+      type: object
+      required: [category, closingStock, itemCount]
+      properties:
+        category:
+          type: string
+        closingStock:
+          type: number
+        itemCount:
+          type: integer
+
+    # REPORTS
+    DailyReport:
+      type: object
+      required: [date, rows, totalProduction, totalDispatch]
+      properties:
+        date:
+          type: string
+          format: date
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/StockRegisterRow"
+        totalProduction:
+          type: number
+        totalDispatch:
+          type: number
+
+    MonthlyReport:
+      type: object
+      required: [month, year, rows, totalProduction, totalDispatch]
+      properties:
+        month:
+          type: integer
+        year:
+          type: integer
+        rows:
+          type: array
+          items:
+            type: object
+            required: [date, production, dispatch]
+            properties:
+              date:
+                type: string
+                format: date
+              production:
+                type: number
+              dispatch:
+                type: number
+        totalProduction:
+          type: number
+        totalDispatch:
+          type: number
+
+    CategoryReport:
+      type: object
+      required: [category, totalProduction, totalDispatch, closingStock]
+      properties:
+        category:
+          type: string
+        totalProduction:
+          type: number
+        totalDispatch:
+          type: number
+        closingStock:
+          type: number
+
+    ProductionSummaryRow:
+      type: object
+      required: [stockItemId, itemCode, category, size, length, totalQuantity]
+      properties:
+        stockItemId:
+          type: integer
+        itemCode:
+          type: string
+        category:
+          type: string
+        size:
+          type: string
+        length:
+          type: string
+        totalQuantity:
+          type: number
+
+    DispatchSummaryRow:
+      type: object
+      required: [stockItemId, itemCode, category, size, length, totalQuantity]
+      properties:
+        stockItemId:
+          type: integer
+        itemCode:
+          type: string
+        category:
+          type: string
+        size:
+          type: string
+        length:
+          type: string
+        totalQuantity:
+          type: number
+
+    # AUDIT LOGS
+    AuditLog:
+      type: object
+      required: [id, userId, action, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: ["string", "null"]
+        action:
+          type: string
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        oldValue:
+          type: ["string", "null"]
+        newValue:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AuditLogPage:
+      type: object
+      required: [rows, total]
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        total:
+          type: integer
+
+    # NOTIFICATIONS
+    Notification:
+      type: object
+      required: [id, type, message, isRead, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [low_stock, backup_failed, large_dispatch, info]
+        message:
+          type: string
+        isRead:
+          type: boolean
+        metadata:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    # BACKUP
+    BackupLog:
+      type: object
+      required: [id, status, createdAt]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [success, failed, in_progress]
+        filename:
+          type: ["string", "null"]
+        sizeBytes:
+          type: ["integer", "null"]
+        error:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
