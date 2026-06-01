@@ -15,7 +15,7 @@ import StockMaster from "@/pages/stock-master";
 import Production from "@/pages/production";
 import Dispatch from "@/pages/dispatch";
 import StockRegister from "@/pages/stock-register";
-import StockLedger from "@/pages/stock-ledger";
+import StockLedger from "@/pages/opening-stock";
 import Reports from "@/pages/reports";
 import AuditLogs from "@/pages/audit-logs";
 import Users from "@/pages/users";
@@ -52,7 +52,7 @@ function Router() {
           <StockRegister />
         </AuthGuard>
       </Route>
-      <Route path="/stock-ledger">
+      <Route path="/opening-stock">
         <AuthGuard>
           <StockLedger />
         </AuthGuard>

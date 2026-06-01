@@ -14,6 +14,9 @@ import { logAudit } from "../lib/auditLogger";
 
 const router = Router();
 
+const toDateString = (value: string | Date) =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : value;
+
 const withJoins = () =>
   db
     .select({
@@ -84,7 +87,12 @@ router.post("/dispatch", authenticate, requireRole("admin", "dispatch"), async (
   }
   const [entry] = await db
     .insert(dispatchEntriesTable)
-    .values({ ...parsed.data, quantity: String(parsed.data.quantity), createdById: req.user!.userId })
+    .values({
+      ...parsed.data,
+      date: toDateString(parsed.data.date),
+      quantity: String(parsed.data.quantity),
+      createdById: req.user!.userId,
+    })
     .returning();
 
   await logAudit({

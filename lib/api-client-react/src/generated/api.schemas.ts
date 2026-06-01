@@ -202,6 +202,8 @@ export interface ProductionEntry {
   stockItem?: StockItem;
   quantity: number;
   /** @nullable */
+  baseRate?: number | null;
+  /** @nullable */
   remarks?: string | null;
   createdById?: number;
   /** @nullable */
@@ -219,11 +221,15 @@ export interface ProductionInput {
   date: string;
   stockItemId: number;
   quantity: number;
+  /** @nullable */
+  baseRate?: number | null;
   remarks?: string;
 }
 
 export interface ProductionUpdate {
   quantity?: number;
+  /** @nullable */
+  baseRate?: number | null;
   remarks?: string;
 }
 
@@ -233,6 +239,8 @@ export interface DispatchEntry {
   stockItemId: number;
   stockItem?: StockItem;
   quantity: number;
+  /** @nullable */
+  baseRate?: number | null;
   partyName: string;
   /** @nullable */
   invoiceNumber?: string | null;
@@ -256,6 +264,8 @@ export interface DispatchInput {
   date: string;
   stockItemId: number;
   quantity: number;
+  /** @nullable */
+  baseRate?: number | null;
   partyName: string;
   invoiceNumber?: string;
   vehicleNumber?: string;
@@ -264,6 +274,8 @@ export interface DispatchInput {
 
 export interface DispatchUpdate {
   quantity?: number;
+  /** @nullable */
+  baseRate?: number | null;
   partyName?: string;
   invoiceNumber?: string;
   vehicleNumber?: string;
@@ -515,4 +527,3 @@ toDate?: string;
 limit?: number;
 offset?: number;
 };
-

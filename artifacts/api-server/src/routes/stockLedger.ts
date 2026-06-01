@@ -1,9 +1,17 @@
 import { Router } from "express";
-import { eq, and, sql, asc } from "drizzle-orm";
-import { db, stockMasterTable, openingStockTable, productionEntriesTable, dispatchEntriesTable } from "@workspace/db";
+import { eq, and, sql } from "drizzle-orm";
+import {
+  db,
+  openingStockTable,
+  productionEntriesTable,
+  dispatchEntriesTable,
+  saleEntriesTable,
+  purchaseReturnEntriesTable,
+  issueProductionEntriesTable,
+} from "@workspace/db";
 import { GetStockLedgerQueryParams } from "@workspace/api-zod";
 import { authenticate } from "../lib/auth";
-import { getOpeningStock } from "../lib/stockEngine";
+import { getOpeningStock, getDayMovementTotals } from "../lib/stockEngine";
 
 const router = Router();
 
@@ -43,6 +51,39 @@ router.get("/stock-ledger", authenticate, async (req, res): Promise<void> => {
       ),
     );
 
+  const saleDates = await db
+    .selectDistinct({ date: saleEntriesTable.date })
+    .from(saleEntriesTable)
+    .where(
+      and(
+        eq(saleEntriesTable.stockItemId, stockItemId),
+        ...(fromDate ? [sql`${saleEntriesTable.date} >= ${fromDate}`] : []),
+        ...(toDate ? [sql`${saleEntriesTable.date} <= ${toDate}`] : []),
+      ),
+    );
+
+  const purchaseReturnDates = await db
+    .selectDistinct({ date: purchaseReturnEntriesTable.date })
+    .from(purchaseReturnEntriesTable)
+    .where(
+      and(
+        eq(purchaseReturnEntriesTable.stockItemId, stockItemId),
+        ...(fromDate ? [sql`${purchaseReturnEntriesTable.date} >= ${fromDate}`] : []),
+        ...(toDate ? [sql`${purchaseReturnEntriesTable.date} <= ${toDate}`] : []),
+      ),
+    );
+
+  const issueProductionDates = await db
+    .selectDistinct({ date: issueProductionEntriesTable.date })
+    .from(issueProductionEntriesTable)
+    .where(
+      and(
+        eq(issueProductionEntriesTable.stockItemId, stockItemId),
+        ...(fromDate ? [sql`${issueProductionEntriesTable.date} >= ${fromDate}`] : []),
+        ...(toDate ? [sql`${issueProductionEntriesTable.date} <= ${toDate}`] : []),
+      ),
+    );
+
   // Also include opening stock dates
   const openDates = await db
     .selectDistinct({ date: openingStockTable.effectiveDate })
@@ -58,6 +99,9 @@ router.get("/stock-ledger", authenticate, async (req, res): Promise<void> => {
   const allDates = [...new Set([
     ...prodDates.map((d) => d.date),
     ...dispDates.map((d) => d.date),
+    ...saleDates.map((d) => d.date),
+    ...purchaseReturnDates.map((d) => d.date),
+    ...issueProductionDates.map((d) => d.date),
     ...openDates.map((d) => d.date),
   ])].sort();
 
@@ -70,18 +114,9 @@ router.get("/stock-ledger", authenticate, async (req, res): Promise<void> => {
     allDates.map(async (date) => {
       const openingStock = await getOpeningStock(stockItemId, date as string);
 
-      const [prodResult] = await db
-        .select({ total: sql<string>`COALESCE(SUM(${productionEntriesTable.quantity}), 0)` })
-        .from(productionEntriesTable)
-        .where(and(eq(productionEntriesTable.stockItemId, stockItemId), sql`${productionEntriesTable.date} = ${date}`));
-
-      const [dispResult] = await db
-        .select({ total: sql<string>`COALESCE(SUM(${dispatchEntriesTable.quantity}), 0)` })
-        .from(dispatchEntriesTable)
-        .where(and(eq(dispatchEntriesTable.stockItemId, stockItemId), sql`${dispatchEntriesTable.date} = ${date}`));
-
-      const production = parseFloat(prodResult?.total ?? "0");
-      const dispatch = parseFloat(dispResult?.total ?? "0");
+      const movements = await getDayMovementTotals(stockItemId, date as string);
+      const production = movements.production;
+      const dispatch = movements.dispatch;
       const closingStock = openingStock + production - dispatch;
 
       return { date, openingStock, production, dispatch, closingStock };

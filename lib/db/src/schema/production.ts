@@ -9,6 +9,7 @@ export const productionEntriesTable = pgTable("production_entries", {
   date: date("date").notNull(),
   stockItemId: integer("stock_item_id").notNull().references(() => stockMasterTable.id),
   quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull(),
+  baseRate: numeric("base_rate", { precision: 14, scale: 3 }),
   remarks: text("remarks"),
   createdById: integer("created_by_id").notNull().references(() => usersTable.id),
   updatedById: integer("updated_by_id").references(() => usersTable.id),

@@ -345,6 +345,7 @@ export const CreateProductionBody = zod.object({
   "date": zod.coerce.date(),
   "stockItemId": zod.number(),
   "quantity": zod.number(),
+  "baseRate": zod.number().nullish(),
   "remarks": zod.string().optional()
 })
 
@@ -371,6 +372,7 @@ export const GetProductionResponse = zod.object({
   "createdAt": zod.coerce.date().optional()
 }).optional(),
   "quantity": zod.number(),
+  "baseRate": zod.number().nullish(),
   "remarks": zod.string().nullish(),
   "createdById": zod.number().optional(),
   "createdByName": zod.string().nullish(),
@@ -390,6 +392,7 @@ export const UpdateProductionParams = zod.object({
 
 export const UpdateProductionBody = zod.object({
   "quantity": zod.number().optional(),
+  "baseRate": zod.number().nullish(),
   "remarks": zod.string().optional()
 })
 
@@ -408,6 +411,7 @@ export const UpdateProductionResponse = zod.object({
   "createdAt": zod.coerce.date().optional()
 }).optional(),
   "quantity": zod.number(),
+  "baseRate": zod.number().nullish(),
   "remarks": zod.string().nullish(),
   "createdById": zod.number().optional(),
   "createdByName": zod.string().nullish(),
@@ -874,5 +878,4 @@ export const TriggerBackupResponse = zod.object({
   "error": zod.string().nullish(),
   "createdAt": zod.coerce.date()
 })
-
 

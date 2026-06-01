@@ -1,6 +1,14 @@
 import { Router } from "express";
 import { eq, and, sql } from "drizzle-orm";
-import { db, stockMasterTable, productionEntriesTable, dispatchEntriesTable } from "@workspace/db";
+import {
+  db,
+  stockMasterTable,
+  productionEntriesTable,
+  dispatchEntriesTable,
+  saleEntriesTable,
+  purchaseReturnEntriesTable,
+  issueProductionEntriesTable,
+} from "@workspace/db";
 import {
   GetDailyReportQueryParams,
   GetMonthlyReportQueryParams,
@@ -9,9 +17,12 @@ import {
   GetDispatchSummaryReportQueryParams,
 } from "@workspace/api-zod";
 import { authenticate } from "../lib/auth";
-import { getOpeningStock } from "../lib/stockEngine";
+import { getOpeningStock, getDayMovementTotals, getRangeMovementTotals } from "../lib/stockEngine";
 
 const router = Router();
+
+const toDateString = (value: string | Date) =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : value;
 
 router.get("/reports/daily", authenticate, async (req, res): Promise<void> => {
   const params = GetDailyReportQueryParams.safeParse(req.query);
@@ -24,6 +35,7 @@ router.get("/reports/daily", authenticate, async (req, res): Promise<void> => {
     res.status(400).json({ error: "date is required" });
     return;
   }
+  const reportDate = toDateString(date);
 
   const items = await db
     .select()
@@ -36,17 +48,10 @@ router.get("/reports/daily", authenticate, async (req, res): Promise<void> => {
 
   const rows = await Promise.all(
     items.map(async (item) => {
-      const openingStock = await getOpeningStock(item.id, date);
-      const [prodResult] = await db
-        .select({ total: sql<string>`COALESCE(SUM(${productionEntriesTable.quantity}), 0)` })
-        .from(productionEntriesTable)
-        .where(and(eq(productionEntriesTable.stockItemId, item.id), sql`${productionEntriesTable.date} = ${date}`));
-      const [dispResult] = await db
-        .select({ total: sql<string>`COALESCE(SUM(${dispatchEntriesTable.quantity}), 0)` })
-        .from(dispatchEntriesTable)
-        .where(and(eq(dispatchEntriesTable.stockItemId, item.id), sql`${dispatchEntriesTable.date} = ${date}`));
-      const production = parseFloat(prodResult?.total ?? "0");
-      const dispatch = parseFloat(dispResult?.total ?? "0");
+      const openingStock = await getOpeningStock(item.id, reportDate);
+      const movements = await getDayMovementTotals(item.id, reportDate);
+      const production = movements.production;
+      const dispatch = movements.dispatch;
       totalProduction += production;
       totalDispatch += dispatch;
       return {
@@ -64,7 +69,7 @@ router.get("/reports/daily", authenticate, async (req, res): Promise<void> => {
     }),
   );
 
-  res.json({ date, rows, totalProduction, totalDispatch });
+  res.json({ date: reportDate, rows, totalProduction, totalDispatch });
 });
 
 router.get("/reports/monthly", authenticate, async (req, res): Promise<void> => {
@@ -103,8 +108,41 @@ router.get("/reports/monthly", authenticate, async (req, res): Promise<void> => 
         sql`${dispatchEntriesTable.date} <= ${end}`,
       ),
     );
+  const saleDates = await db
+    .selectDistinct({ date: saleEntriesTable.date })
+    .from(saleEntriesTable)
+    .where(
+      and(
+        sql`${saleEntriesTable.date} >= ${start}`,
+        sql`${saleEntriesTable.date} <= ${end}`,
+      ),
+    );
+  const purchaseReturnDates = await db
+    .selectDistinct({ date: purchaseReturnEntriesTable.date })
+    .from(purchaseReturnEntriesTable)
+    .where(
+      and(
+        sql`${purchaseReturnEntriesTable.date} >= ${start}`,
+        sql`${purchaseReturnEntriesTable.date} <= ${end}`,
+      ),
+    );
+  const issueProductionDates = await db
+    .selectDistinct({ date: issueProductionEntriesTable.date })
+    .from(issueProductionEntriesTable)
+    .where(
+      and(
+        sql`${issueProductionEntriesTable.date} >= ${start}`,
+        sql`${issueProductionEntriesTable.date} <= ${end}`,
+      ),
+    );
 
-  const allDates = [...new Set([...prodDates.map((d) => d.date), ...dispDates.map((d) => d.date)])].sort();
+  const allDates = [...new Set([
+    ...prodDates.map((d) => d.date),
+    ...dispDates.map((d) => d.date),
+    ...saleDates.map((d) => d.date),
+    ...purchaseReturnDates.map((d) => d.date),
+    ...issueProductionDates.map((d) => d.date),
+  ])].sort();
 
   let totalProduction = 0;
   let totalDispatch = 0;
@@ -119,8 +157,24 @@ router.get("/reports/monthly", authenticate, async (req, res): Promise<void> => 
         .select({ total: sql<string>`COALESCE(SUM(${dispatchEntriesTable.quantity}), 0)` })
         .from(dispatchEntriesTable)
         .where(sql`${dispatchEntriesTable.date} = ${date}`);
+      const [saleResult] = await db
+        .select({ total: sql<string>`COALESCE(SUM(${saleEntriesTable.quantity}), 0)` })
+        .from(saleEntriesTable)
+        .where(sql`${saleEntriesTable.date} = ${date}`);
+      const [purchaseReturnResult] = await db
+        .select({ total: sql<string>`COALESCE(SUM(${purchaseReturnEntriesTable.quantity}), 0)` })
+        .from(purchaseReturnEntriesTable)
+        .where(sql`${purchaseReturnEntriesTable.date} = ${date}`);
+      const [issueProductionResult] = await db
+        .select({ total: sql<string>`COALESCE(SUM(${issueProductionEntriesTable.quantity}), 0)` })
+        .from(issueProductionEntriesTable)
+        .where(sql`${issueProductionEntriesTable.date} = ${date}`);
       const production = parseFloat(prodResult?.total ?? "0");
-      const dispatch = parseFloat(dispResult?.total ?? "0");
+      const dispatch =
+        parseFloat(dispResult?.total ?? "0") +
+        parseFloat(saleResult?.total ?? "0") +
+        parseFloat(purchaseReturnResult?.total ?? "0") +
+        parseFloat(issueProductionResult?.total ?? "0");
       totalProduction += production;
       totalDispatch += dispatch;
       return { date, production, dispatch };
@@ -145,45 +199,21 @@ router.get("/reports/category", authenticate, async (req, res): Promise<void> =>
   const today = new Date().toISOString().slice(0, 10);
   const items = await db.select().from(stockMasterTable).where(eq(stockMasterTable.status, "active"));
   const categoryMap: Record<string, { totalProduction: number; totalDispatch: number; closingStock: number }> = {};
+  const from = toDateString(fromDate);
+  const to = toDateString(toDate);
 
   for (const item of items) {
-    const [prodResult] = await db
-      .select({ total: sql<string>`COALESCE(SUM(${productionEntriesTable.quantity}), 0)` })
-      .from(productionEntriesTable)
-      .where(
-        and(
-          eq(productionEntriesTable.stockItemId, item.id),
-          sql`${productionEntriesTable.date} >= ${fromDate}`,
-          sql`${productionEntriesTable.date} <= ${toDate}`,
-        ),
-      );
-    const [dispResult] = await db
-      .select({ total: sql<string>`COALESCE(SUM(${dispatchEntriesTable.quantity}), 0)` })
-      .from(dispatchEntriesTable)
-      .where(
-        and(
-          eq(dispatchEntriesTable.stockItemId, item.id),
-          sql`${dispatchEntriesTable.date} >= ${fromDate}`,
-          sql`${dispatchEntriesTable.date} <= ${toDate}`,
-        ),
-      );
+    const rangeMovements = await getRangeMovementTotals(item.id, from, to);
 
     const opening = await getOpeningStock(item.id, today);
-    const [todayProd] = await db
-      .select({ total: sql<string>`COALESCE(SUM(${productionEntriesTable.quantity}), 0)` })
-      .from(productionEntriesTable)
-      .where(and(eq(productionEntriesTable.stockItemId, item.id), sql`${productionEntriesTable.date} = ${today}`));
-    const [todayDisp] = await db
-      .select({ total: sql<string>`COALESCE(SUM(${dispatchEntriesTable.quantity}), 0)` })
-      .from(dispatchEntriesTable)
-      .where(and(eq(dispatchEntriesTable.stockItemId, item.id), sql`${dispatchEntriesTable.date} = ${today}`));
-    const closing = opening + parseFloat(todayProd?.total ?? "0") - parseFloat(todayDisp?.total ?? "0");
+    const todayMovements = await getDayMovementTotals(item.id, today);
+    const closing = opening + todayMovements.production - todayMovements.dispatch;
 
     if (!categoryMap[item.category]) {
       categoryMap[item.category] = { totalProduction: 0, totalDispatch: 0, closingStock: 0 };
     }
-    categoryMap[item.category].totalProduction += parseFloat(prodResult?.total ?? "0");
-    categoryMap[item.category].totalDispatch += parseFloat(dispResult?.total ?? "0");
+    categoryMap[item.category].totalProduction += rangeMovements.production;
+    categoryMap[item.category].totalDispatch += rangeMovements.dispatch;
     categoryMap[item.category].closingStock += closing;
   }
 
@@ -247,36 +277,24 @@ router.get("/reports/dispatch-summary", authenticate, async (req, res): Promise<
     return;
   }
 
-  const rows = await db
-    .select({
-      stockItemId: dispatchEntriesTable.stockItemId,
-      totalQuantity: sql<string>`SUM(${dispatchEntriesTable.quantity})`,
-    })
-    .from(dispatchEntriesTable)
-    .where(
-      and(
-        sql`${dispatchEntriesTable.date} >= ${fromDate}`,
-        sql`${dispatchEntriesTable.date} <= ${toDate}`,
-      ),
-    )
-    .groupBy(dispatchEntriesTable.stockItemId)
-    .orderBy(sql`SUM(${dispatchEntriesTable.quantity}) DESC`);
-
+  const items = await db.select().from(stockMasterTable).where(eq(stockMasterTable.status, "active"));
+  const from = toDateString(fromDate);
+  const to = toDateString(toDate);
   const result = await Promise.all(
-    rows.map(async (r) => {
-      const [item] = await db.select().from(stockMasterTable).where(eq(stockMasterTable.id, r.stockItemId));
+    items.map(async (item) => {
+      const totals = await getRangeMovementTotals(item.id, from, to);
       return {
-        stockItemId: r.stockItemId,
-        itemCode: item?.itemCode ?? "",
-        category: item?.category ?? "",
-        size: item?.size ?? "",
-        length: item?.length ?? "",
-        totalQuantity: parseFloat(r.totalQuantity),
+        stockItemId: item.id,
+        itemCode: item.itemCode,
+        category: item.category,
+        size: item.size,
+        length: item.length,
+        totalQuantity: totals.dispatch,
       };
     }),
   );
 
-  res.json(result);
+  res.json(result.filter((row) => row.totalQuantity > 0).sort((a, b) => b.totalQuantity - a.totalQuantity));
 });
 
 export default router;

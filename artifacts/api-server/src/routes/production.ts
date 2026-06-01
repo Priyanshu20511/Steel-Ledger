@@ -14,6 +14,9 @@ import { logAudit } from "../lib/auditLogger";
 
 const router = Router();
 
+const toDateString = (value: string | Date) =>
+  value instanceof Date ? value.toISOString().slice(0, 10) : value;
+
 const withJoins = () =>
   db
     .select({
@@ -21,6 +24,7 @@ const withJoins = () =>
       date: productionEntriesTable.date,
       stockItemId: productionEntriesTable.stockItemId,
       quantity: productionEntriesTable.quantity,
+      baseRate: productionEntriesTable.baseRate,
       remarks: productionEntriesTable.remarks,
       createdById: productionEntriesTable.createdById,
       updatedById: productionEntriesTable.updatedById,
@@ -41,7 +45,14 @@ const withJoins = () =>
     .innerJoin(stockMasterTable, eq(productionEntriesTable.stockItemId, stockMasterTable.id));
 
 router.get("/production", authenticate, async (req, res): Promise<void> => {
-  const params = ListProductionQueryParams.safeParse(req.query);
+  const normalizedQuery = {
+    ...req.query,
+    date: typeof req.query.date === "string" ? new Date(req.query.date) : req.query.date,
+    fromDate: typeof req.query.fromDate === "string" ? new Date(req.query.fromDate) : req.query.fromDate,
+    toDate: typeof req.query.toDate === "string" ? new Date(req.query.toDate) : req.query.toDate,
+  };
+
+  const params = ListProductionQueryParams.safeParse(normalizedQuery);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
     return;
@@ -49,9 +60,9 @@ router.get("/production", authenticate, async (req, res): Promise<void> => {
   const { date, fromDate, toDate, stockItemId } = params.data;
 
   const conditions = [];
-  if (date) conditions.push(sql`${productionEntriesTable.date} = ${date}`);
-  if (fromDate) conditions.push(sql`${productionEntriesTable.date} >= ${fromDate}`);
-  if (toDate) conditions.push(sql`${productionEntriesTable.date} <= ${toDate}`);
+  if (date) conditions.push(sql`${productionEntriesTable.date} = ${date.toISOString().slice(0, 10)}`);
+  if (fromDate) conditions.push(sql`${productionEntriesTable.date} >= ${fromDate.toISOString().slice(0, 10)}`);
+  if (toDate) conditions.push(sql`${productionEntriesTable.date} <= ${toDate.toISOString().slice(0, 10)}`);
   if (stockItemId) conditions.push(eq(productionEntriesTable.stockItemId, stockItemId));
 
   let query = withJoins().$dynamic();
@@ -81,7 +92,13 @@ router.post("/production", authenticate, requireRole("admin", "production"), asy
   }
   const [entry] = await db
     .insert(productionEntriesTable)
-    .values({ ...parsed.data, quantity: String(parsed.data.quantity), createdById: req.user!.userId })
+    .values({
+      ...parsed.data,
+      date: toDateString(parsed.data.date),
+      quantity: String(parsed.data.quantity),
+      baseRate: parsed.data.baseRate != null ? String(parsed.data.baseRate) : null,
+      createdById: req.user!.userId,
+    })
     .returning();
 
   await logAudit({
@@ -136,6 +153,7 @@ router.patch("/production/:id", authenticate, requireRole("admin", "production")
   }
   const updateData: Record<string, unknown> = { updatedById: req.user!.userId };
   if (parsed.data.quantity != null) updateData.quantity = String(parsed.data.quantity);
+  if (parsed.data.baseRate !== undefined) updateData.baseRate = parsed.data.baseRate != null ? String(parsed.data.baseRate) : null;
   if (parsed.data.remarks != null) updateData.remarks = parsed.data.remarks;
 
   const [entry] = await db
