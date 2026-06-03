@@ -11,7 +11,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
-import StockMaster from "@/pages/stock-master";
+import StockMaster from "@/pages/master-data";
 import Production from "@/pages/production";
 import Dispatch from "@/pages/dispatch";
 import StockRegister from "@/pages/stock-register";
@@ -32,7 +32,7 @@ function Router() {
           <Dashboard />
         </AuthGuard>
       </Route>
-      <Route path="/stock-master">
+      <Route path="/master-data">
         <AuthGuard>
           <StockMaster />
         </AuthGuard>

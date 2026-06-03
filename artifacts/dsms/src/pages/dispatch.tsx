@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useListStockItems } from "@workspace/api-client-react";
 import type { StockItem } from "@workspace/api-client-react";
 import { useState } from "react";
@@ -378,7 +378,24 @@ function StockOutDialog({
     { status: "active" },
     { query: { queryKey: ["stockItems", "active"] } },
   );
+  const { data: parties = [] } = useQuery({
+    queryKey: ["parties"],
+    queryFn: async () => {
+      const token = localStorage.getItem("dsms_token");
 
+      const response = await fetch("/api/party-master", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load parties");
+      }
+
+      return response.json();
+    },
+  });
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -501,7 +518,22 @@ function StockOutDialog({
                     <FormItem>
                       <FormLabel>Party Name</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Party" />
+                          </SelectTrigger>
+
+                          <SelectContent>
+                            {parties.map((party: any) => (
+                              <SelectItem key={party.id} value={party.name}>
+                                {party.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

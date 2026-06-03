@@ -357,8 +357,28 @@ function ProductionDialog({
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: stockItems } = useListStockItems({
-    query: { queryKey: ["stockItems", "active"] },
+  const { data: stockItems } = useListStockItems(undefined, {
+    query: {
+      queryKey: ["stockItems", "active"],
+    },
+  });
+  const { data: parties = [] } = useQuery({
+    queryKey: ["parties"],
+    queryFn: async () => {
+      const token = localStorage.getItem("dsms_token");
+
+      const response = await fetch("/api/party-master", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load parties");
+      }
+
+      return response.json();
+    },
   });
 
   const createMutation = useCreateProduction();
@@ -515,7 +535,22 @@ function ProductionDialog({
                   <FormItem>
                     <FormLabel>Party Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter party name" {...field} />
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Party" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          {parties.map((party: any) => (
+                            <SelectItem key={party.id} value={party.name}>
+                              {party.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

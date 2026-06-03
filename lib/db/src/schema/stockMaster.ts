@@ -9,13 +9,21 @@ export const stockMasterTable = pgTable("stock_master", {
   itemCode: text("item_code").notNull().unique(),
   category: text("category").notNull(),
   size: text("size").notNull(),
+  sizeDiff: text("size_diff"),
   length: text("length").notNull(),
   unit: text("unit").notNull().default("NOS"),
   status: itemStatusEnum("status").notNull().default("active"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
-export const insertStockMasterSchema = createInsertSchema(stockMasterTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertStockMasterSchema = createInsertSchema(
+  stockMasterTable,
+).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertStockMaster = z.infer<typeof insertStockMasterSchema>;
 export type StockMaster = typeof stockMasterTable.$inferSelect;

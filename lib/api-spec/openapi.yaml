@@ -327,6 +327,78 @@ paths:
                 type: array
                 items:
                   type: string
+  # PARTY MASTER
+  /party-master:
+    get:
+      operationId: listParties
+      tags: [partyMaster]
+      summary: List all parties
+      responses:
+        "200":
+          description: List of parties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Party"
+
+    post:
+      operationId: createParty
+      tags: [partyMaster]
+      summary: Create a party
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Party"
+
+  /party-master/{id}:
+    patch:
+      operationId: updateParty
+      tags: [partyMaster]
+      summary: Update a party
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Party"
+
+    delete:
+      operationId: deleteParty
+      tags: [partyMaster]
+      summary: Delete a party
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
 
   # OPENING STOCK
   /opening-stock:
@@ -1161,6 +1233,50 @@ components:
           type: string
           enum: [active, inactive]
 
+    # PARTY MASTER
+    Party:
+      type: object
+      required: [id, partyName, partyType, status]
+      properties:
+        id:
+          type: integer
+        partyName:
+          type: string
+        partyType:
+          type: string
+          enum: [supplier, customer, both]
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+
+    PartyInput:
+      type: object
+      required: [partyName, partyType]
+      properties:
+        partyName:
+          type: string
+        partyType:
+          type: string
+          enum: [supplier, customer, both]
+        status:
+          type: string
+          enum: [active, inactive]
+
+    PartyUpdate:
+      type: object
+      properties:
+        partyName:
+          type: string
+        partyType:
+          type: string
+          enum: [supplier, customer, both]
+        status:
+          type: string
+          enum: [active, inactive]
+
     # OPENING STOCK
     OpeningStockEntry:
       type: object
@@ -1355,7 +1471,18 @@ components:
     # STOCK REGISTER
     StockRegisterRow:
       type: object
-      required: [stockItemId, category, size, length, unit, openingStock, production, dispatch, closingStock]
+      required:
+        [
+          stockItemId,
+          category,
+          size,
+          length,
+          unit,
+          openingStock,
+          production,
+          dispatch,
+          closingStock,
+        ]
       properties:
         stockItemId:
           type: integer
@@ -1398,7 +1525,16 @@ components:
     # STOCK SUMMARY
     StockSummary:
       type: object
-      required: [date, totalOpeningStock, totalProduction, totalDispatch, totalClosingStock, totalItems, lowStockCount]
+      required:
+        [
+          date,
+          totalOpeningStock,
+          totalProduction,
+          totalDispatch,
+          totalClosingStock,
+          totalItems,
+          lowStockCount,
+        ]
       properties:
         date:
           type: string

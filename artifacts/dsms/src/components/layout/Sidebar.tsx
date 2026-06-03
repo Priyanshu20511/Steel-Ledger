@@ -26,7 +26,7 @@ export function Sidebar() {
 
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard, show: true },
-    { name: "Stock Master", href: "/stock-master", icon: Package, show: true },
+    { name: "Master Data", href: "/master-data", icon: Package, show: true },
     {
       name: "Opening Stock",
       href: "/opening-stock",

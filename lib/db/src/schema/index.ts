@@ -1,5 +1,6 @@
 export * from "./users";
 export * from "./stockMaster";
+export * from "./partyMaster";
 export * from "./openingStock";
 export * from "./production";
 export * from "./purchase";
