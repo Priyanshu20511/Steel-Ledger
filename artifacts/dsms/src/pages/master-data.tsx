@@ -528,14 +528,17 @@ async function createParty(data: any) {
 
   // console.log("B - TOKEN", token);
 
-  const response = await fetch("/api/party-master", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/api/party-master`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
     },
-    body: JSON.stringify(data),
-  });
+  );
 
   // console.log("C - STATUS", response.status);
 

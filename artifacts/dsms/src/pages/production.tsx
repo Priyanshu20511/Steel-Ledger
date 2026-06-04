@@ -367,11 +367,14 @@ function ProductionDialog({
     queryFn: async () => {
       const token = localStorage.getItem("dsms_token");
 
-      const response = await fetch("/api/party-master", {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/party-master`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error("Failed to load parties");
