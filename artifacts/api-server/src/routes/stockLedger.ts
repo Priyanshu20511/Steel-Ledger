@@ -4,6 +4,8 @@ import {
   db,
   openingStockTable,
   productionEntriesTable,
+  purchaseEntriesTable,
+  saleReturnEntriesTable,
   dispatchEntriesTable,
   saleEntriesTable,
   purchaseReturnEntriesTable,
@@ -35,11 +37,34 @@ router.get("/stock-ledger", authenticate, async (req, res): Promise<void> => {
     .where(
       and(
         eq(productionEntriesTable.stockItemId, stockItemId),
-        ...(fromDate ? [sql`${productionEntriesTable.date} >= ${fromDate}`] : []),
+        ...(fromDate
+          ? [sql`${productionEntriesTable.date} >= ${fromDate}`]
+          : []),
         ...(toDate ? [sql`${productionEntriesTable.date} <= ${toDate}`] : []),
       ),
     );
-
+  const purchaseDates = await db
+    .selectDistinct({ date: purchaseEntriesTable.date })
+    .from(purchaseEntriesTable)
+    .where(
+      and(
+        eq(purchaseEntriesTable.stockItemId, stockItemId),
+        ...(fromDate ? [sql`${purchaseEntriesTable.date} >= ${fromDate}`] : []),
+        ...(toDate ? [sql`${purchaseEntriesTable.date} <= ${toDate}`] : []),
+      ),
+    );
+  const saleReturnDates = await db
+    .selectDistinct({ date: saleReturnEntriesTable.date })
+    .from(saleReturnEntriesTable)
+    .where(
+      and(
+        eq(saleReturnEntriesTable.stockItemId, stockItemId),
+        ...(fromDate
+          ? [sql`${saleReturnEntriesTable.date} >= ${fromDate}`]
+          : []),
+        ...(toDate ? [sql`${saleReturnEntriesTable.date} <= ${toDate}`] : []),
+      ),
+    );
   const dispDates = await db
     .selectDistinct({ date: dispatchEntriesTable.date })
     .from(dispatchEntriesTable)
@@ -68,8 +93,12 @@ router.get("/stock-ledger", authenticate, async (req, res): Promise<void> => {
     .where(
       and(
         eq(purchaseReturnEntriesTable.stockItemId, stockItemId),
-        ...(fromDate ? [sql`${purchaseReturnEntriesTable.date} >= ${fromDate}`] : []),
-        ...(toDate ? [sql`${purchaseReturnEntriesTable.date} <= ${toDate}`] : []),
+        ...(fromDate
+          ? [sql`${purchaseReturnEntriesTable.date} >= ${fromDate}`]
+          : []),
+        ...(toDate
+          ? [sql`${purchaseReturnEntriesTable.date} <= ${toDate}`]
+          : []),
       ),
     );
 
@@ -79,8 +108,12 @@ router.get("/stock-ledger", authenticate, async (req, res): Promise<void> => {
     .where(
       and(
         eq(issueProductionEntriesTable.stockItemId, stockItemId),
-        ...(fromDate ? [sql`${issueProductionEntriesTable.date} >= ${fromDate}`] : []),
-        ...(toDate ? [sql`${issueProductionEntriesTable.date} <= ${toDate}`] : []),
+        ...(fromDate
+          ? [sql`${issueProductionEntriesTable.date} >= ${fromDate}`]
+          : []),
+        ...(toDate
+          ? [sql`${issueProductionEntriesTable.date} <= ${toDate}`]
+          : []),
       ),
     );
 
@@ -91,19 +124,27 @@ router.get("/stock-ledger", authenticate, async (req, res): Promise<void> => {
     .where(
       and(
         eq(openingStockTable.stockItemId, stockItemId),
-        ...(fromDate ? [sql`${openingStockTable.effectiveDate} >= ${fromDate}`] : []),
-        ...(toDate ? [sql`${openingStockTable.effectiveDate} <= ${toDate}`] : []),
+        ...(fromDate
+          ? [sql`${openingStockTable.effectiveDate} >= ${fromDate}`]
+          : []),
+        ...(toDate
+          ? [sql`${openingStockTable.effectiveDate} <= ${toDate}`]
+          : []),
       ),
     );
 
-  const allDates = [...new Set([
-    ...prodDates.map((d) => d.date),
-    ...dispDates.map((d) => d.date),
-    ...saleDates.map((d) => d.date),
-    ...purchaseReturnDates.map((d) => d.date),
-    ...issueProductionDates.map((d) => d.date),
-    ...openDates.map((d) => d.date),
-  ])].sort();
+  const allDates = [
+    ...new Set([
+      ...prodDates.map((d) => d.date),
+      ...purchaseDates.map((d) => d.date),
+      ...saleReturnDates.map((d) => d.date),
+      ...dispDates.map((d) => d.date),
+      ...saleDates.map((d) => d.date),
+      ...purchaseReturnDates.map((d) => d.date),
+      ...issueProductionDates.map((d) => d.date),
+      ...openDates.map((d) => d.date),
+    ]),
+  ].sort();
 
   if (allDates.length === 0) {
     res.json([]);
@@ -115,11 +156,25 @@ router.get("/stock-ledger", authenticate, async (req, res): Promise<void> => {
       const openingStock = await getOpeningStock(stockItemId, date as string);
 
       const movements = await getDayMovementTotals(stockItemId, date as string);
-      const production = movements.production;
-      const dispatch = movements.dispatch;
-      const closingStock = openingStock + production - dispatch;
+      const closingStock =
+        openingStock +
+        movements.production +
+        movements.purchase +
+        movements.saleReturn -
+        movements.dispatch;
 
-      return { date, openingStock, production, dispatch, closingStock };
+      return {
+        date,
+        openingStock,
+        production: movements.production,
+        purchase: movements.purchase,
+        saleReturn: movements.saleReturn,
+        sale: movements.sale,
+        purchaseReturn: movements.purchaseReturn,
+        issueProduction: movements.issueProduction,
+        dispatch: movements.dispatch,
+        closingStock,
+      };
     }),
   );
 
