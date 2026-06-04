@@ -365,6 +365,7 @@ function StockItemDialog({
         await createMutation.mutateAsync({ data });
         toast({ title: "Stock item created" });
       } else if (item) {
+        console.log("UPDATE DATA", data);
         await updateMutation.mutateAsync({
           id: item.id,
           data,

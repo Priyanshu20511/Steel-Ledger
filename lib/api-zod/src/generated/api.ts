@@ -205,6 +205,7 @@ export const UpdateStockItemParams = zod.object({
 export const UpdateStockItemBody = zod.object({
   category: zod.string().optional(),
   size: zod.string().optional(),
+  sizeDiff: zod.string().optional(),
   length: zod.string().optional(),
   unit: zod.string().optional(),
   status: zod.enum(["active", "inactive"]).optional(),
