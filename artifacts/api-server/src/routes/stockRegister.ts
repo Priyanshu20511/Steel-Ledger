@@ -49,16 +49,6 @@ router.get("/stock-register", authenticate, async (req, res): Promise<void> => {
         dispatch,
         closingStock,
       } = await getStockRegisterRow(item.id, date);
-      console.log("REGISTER DEBUG", {
-        itemCode: item.itemCode,
-        itemId: item.id,
-        openingStock,
-        production,
-        purchase,
-        saleReturn,
-        dispatch,
-        closingStock,
-      });
 
       return {
         stockItemId: item.id,
