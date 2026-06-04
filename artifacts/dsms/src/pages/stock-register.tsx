@@ -50,13 +50,13 @@ export default function StockRegister() {
   const { data: categories } = useListCategories();
   const { data: register, isLoading } = useGetStockRegister(
     {
-      date: dateStr,
+      date: dateStr as any,
       category: category === "all" ? undefined : category,
     },
     {
       query: {
         queryKey: getGetStockRegisterQueryKey({
-          date: dateStr,
+          date: dateStr as any,
           category: category === "all" ? undefined : category,
         }),
       },
