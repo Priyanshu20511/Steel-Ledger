@@ -109,14 +109,17 @@ const modeConfig: Record<
 
 async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem("dsms_token");
-  const response = await fetch(path, {
-    ...options,
-    headers: {
-      ...(options?.body ? { "Content-Type": "application/json" } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options?.headers,
+  const response = await fetch(
+    path.startsWith("http") ? path : `${import.meta.env.VITE_API_URL}${path}`,
+    {
+      ...options,
+      headers: {
+        ...(options?.body ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options?.headers,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     const text = await response.text();
