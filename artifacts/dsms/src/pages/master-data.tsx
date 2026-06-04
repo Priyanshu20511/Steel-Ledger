@@ -555,14 +555,17 @@ async function updateParty(
 ) {
   const token = localStorage.getItem("dsms_token");
 
-  const response = await fetch(`/api/party-master/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/api/party-master/${id}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(data),
     },
-    body: JSON.stringify(data),
-  });
+  );
 
   if (!response.ok) {
     throw new Error(await response.text());
@@ -573,12 +576,15 @@ async function updateParty(
 async function deleteParty(id: number) {
   const token = localStorage.getItem("dsms_token");
 
-  const response = await fetch(`/api/party-master/${id}`, {
-    method: "DELETE",
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/api/party-master/${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error(await response.text());
