@@ -62,10 +62,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://steel-ledger-api.onrender.com";
+
 async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem("dsms_token");
 
-  const response = await fetch(path, {
+  const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       ...(options?.body ? { "Content-Type": "application/json" } : {}),

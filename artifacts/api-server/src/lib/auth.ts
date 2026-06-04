@@ -26,7 +26,11 @@ declare global {
   }
 }
 
-export function authenticate(req: Request, res: Response, next: NextFunction): void {
+export function authenticate(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({ error: "Unauthorized" });
@@ -37,6 +41,8 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     req.user = verifyToken(token);
     next();
   } catch {
+    console.error("JWT ERROR:", err);
+    console.error("TOKEN:", token);
     res.status(401).json({ error: "Invalid or expired token" });
   }
 }
