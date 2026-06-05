@@ -159,13 +159,27 @@ export default function Production() {
       entryTypeLabel: "Production",
     }),
   );
+  const purchaseRows: StockInEntry[] = (purchaseEntries ?? []).map(
+    (entry: any) => ({
+      ...entry,
+      entryKind: "purchase",
+      entryTypeLabel: "Purchase",
+    }),
+  );
 
+  const saleReturnRows: StockInEntry[] = (saleReturnEntries ?? []).map(
+    (entry: any) => ({
+      ...entry,
+      entryKind: "sale-return",
+      entryTypeLabel: "Sale Return",
+    }),
+  );
   const rows =
     mode === "production"
       ? productionRows
       : mode === "purchase"
-        ? (purchaseEntries ?? [])
-        : (saleReturnEntries ?? []);
+        ? purchaseRows
+        : saleReturnRows;
 
   return (
     <div className="space-y-6">
@@ -316,11 +330,6 @@ export default function Production() {
                 </TableRow>
               ) : (
                 rows.map((entry) => (
-                  console.log("TABLE ROW", {
-                      id: entry.id,
-                      entryKind: entry.entryKind,
-                      entryTypeLabel: entry.entryTypeLabel,
-                    });
                   <TableRow key={`${entry.entryKind}-${entry.id}`}>
                     <TableCell>{entry.entryTypeLabel}</TableCell>
                     <TableCell className="font-medium text-primary">
