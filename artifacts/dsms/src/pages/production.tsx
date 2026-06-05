@@ -141,13 +141,13 @@ export default function Production() {
     queryKey: stockInQueryKey("purchase", dateStr),
     queryFn: () => apiRequest<StockInEntry[]>(`/api/purchase?date=${dateStr}`),
   });
-  console.log("PURCHASE ENTRIES", purchaseEntries);
   const { data: saleReturnEntries, isLoading: isSaleReturnLoading } = useQuery({
     queryKey: stockInQueryKey("sale-return", dateStr),
     queryFn: () =>
       apiRequest<StockInEntry[]>(`/api/sale-return?date=${dateStr}`),
   });
   console.log("SALE RETURN ENTRIES", saleReturnEntries);
+  console.log("PURCHASE ENTRIES", purchaseEntries);
 
   const isLoading =
     isProductionLoading || isPurchaseLoading || isSaleReturnLoading;
@@ -177,6 +177,11 @@ export default function Production() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 justify-start md:justify-end">
+          console.log("TABLE ROW", {
+            id: entry.id,
+            entryKind: entry.entryKind,
+            entryTypeLabel: entry.entryTypeLabel,
+          });
           <ProductionDialog
             mode="create"
             entryKind="purchase"
