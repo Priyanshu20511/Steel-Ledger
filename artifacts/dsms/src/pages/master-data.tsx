@@ -361,11 +361,11 @@ function StockItemDialog({
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       if (mode === "create") {
-        console.log("STOCK DATA", data);
+        // console.log("STOCK DATA", data);
         await createMutation.mutateAsync({ data });
         toast({ title: "Stock item created" });
       } else if (item) {
-        console.log("UPDATE DATA", data);
+        // console.log("UPDATE DATA", data);
         await updateMutation.mutateAsync({
           id: item.id,
           data,

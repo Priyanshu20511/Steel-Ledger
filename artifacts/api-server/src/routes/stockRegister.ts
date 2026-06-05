@@ -69,5 +69,63 @@ router.get("/stock-register", authenticate, async (req, res): Promise<void> => {
 
   res.json(rows);
 });
+router.get(
+  "/stock-register/export-all",
+  authenticate,
+  async (_req, res): Promise<void> => {
+    const items = await db
+      .select()
+      .from(stockMasterTable)
+      .where(eq(stockMasterTable.status, "active"))
+      .orderBy(
+        stockMasterTable.category,
+        stockMasterTable.size,
+        stockMasterTable.length,
+      );
 
+    const today = new Date();
+    const startDate = new Date("2025-01-01"); // adjust if needed
+
+    const rows: string[] = [];
+
+    rows.push(
+      "Date,Item Code,Category,Size,Length,Opening Stock,Production,Dispatch,Closing Stock,Unit",
+    );
+
+    for (
+      let current = new Date(startDate);
+      current <= today;
+      current.setDate(current.getDate() + 1)
+    ) {
+      const date = current.toISOString().slice(0, 10);
+
+      for (const item of items) {
+        const register = await getStockRegisterRow(item.id, date);
+
+        rows.push(
+          [
+            date,
+            item.itemCode,
+            item.category,
+            item.size,
+            item.length,
+            register.openingStock,
+            register.production,
+            register.dispatch,
+            register.closingStock,
+            item.unit,
+          ].join(","),
+        );
+      }
+    }
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="stock-register-all.csv"',
+    );
+
+    res.send(rows.join("\n"));
+  },
+);
 export default router;

@@ -228,7 +228,7 @@ export async function getOpeningStock(
     date,
   );
 
-  return (
+  const opening =
     baseQty +
     production +
     purchase +
@@ -236,8 +236,34 @@ export async function getOpeningStock(
     sale -
     purchaseReturn -
     issueProduction -
-    dispatch
-  );
+    dispatch;
+
+  console.log("OPENING STOCK DEBUG", {
+    stockItemId,
+    date,
+    baseQty,
+    baseDate,
+    production,
+    purchase,
+    saleReturn,
+    sale,
+    purchaseReturn,
+    issueProduction,
+    dispatch,
+    opening,
+  });
+
+  return opening;
+  // return (
+  //   baseQty +
+  //   production +
+  //   purchase +
+  //   saleReturn -
+  //   sale -
+  //   purchaseReturn -
+  //   issueProduction -
+  //   dispatch
+  // );
 }
 
 /**

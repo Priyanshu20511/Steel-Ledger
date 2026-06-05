@@ -23,6 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,6 +51,7 @@ import { cn } from "@/lib/utils";
 export default function StockRegister() {
   const [date, setDate] = useState<Date>(new Date());
   const [category, setCategory] = useState<string>("all");
+  const [exportOpen, setExportOpen] = useState(false);
 
   const dateStr = format(date, "yyyy-MM-dd");
 
@@ -66,6 +74,54 @@ export default function StockRegister() {
   const handlePrint = () => {
     window.print();
   };
+  // const handleExportCSV = () => {
+  //   if (!register || register.length === 0) return;
+
+  //   const headers = [
+  //     "Item Code",
+  //     "Category",
+  //     "Size",
+  //     "Length",
+  //     "Opening Stock",
+  //     "Production",
+  //     "Dispatch",
+  //     "Closing Stock",
+  //     "Unit",
+  //   ];
+
+  //   const rows = register.map((row) => [
+  //     row.itemCode,
+  //     row.category,
+  //     row.size,
+  //     row.length,
+  //     row.openingStock,
+  //     row.production,
+  //     row.dispatch,
+  //     row.closingStock,
+  //     row.unit,
+  //   ]);
+
+  //   const csvContent = [
+  //     headers.join(","),
+  //     ...rows.map((row) => row.join(",")),
+  //   ].join("\n");
+
+  //   const blob = new Blob([csvContent], {
+  //     type: "text/csv;charset=utf-8;",
+  //   });
+
+  //   const url = window.URL.createObjectURL(blob);
+
+  //   const link = document.createElement("a");
+  //   link.href = url;
+  //   link.download = `stock-register-${dateStr}.csv`;
+
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+
+  //   window.URL.revokeObjectURL(url);
+  // };
 
   // Calculate totals
   const totals = register?.reduce(
@@ -91,7 +147,7 @@ export default function StockRegister() {
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" /> Print
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setExportOpen(true)}>
             <Download className="mr-2 h-4 w-4" /> Export CSV
           </Button>
         </div>
@@ -261,6 +317,35 @@ export default function StockRegister() {
           </div>
         </CardContent>
       </Card>
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Export Stock Register</DialogTitle>
+            <DialogDescription>
+              Export all stock register data till now.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setExportOpen(false)}>
+              Cancel
+            </Button>
+
+            <Button
+              onClick={() => {
+                window.open(
+                  `${import.meta.env.VITE_API_URL}/api/stock-register/export-all`,
+                  "_blank",
+                );
+
+                setExportOpen(false);
+              }}
+            >
+              Export
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
