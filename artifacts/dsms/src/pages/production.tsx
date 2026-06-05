@@ -177,11 +177,6 @@ export default function Production() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 justify-start md:justify-end">
-          console.log("TABLE ROW", {
-            id: entry.id,
-            entryKind: entry.entryKind,
-            entryTypeLabel: entry.entryTypeLabel,
-          });
           <ProductionDialog
             mode="create"
             entryKind="purchase"
@@ -321,6 +316,11 @@ export default function Production() {
                 </TableRow>
               ) : (
                 rows.map((entry) => (
+                  console.log("TABLE ROW", {
+                      id: entry.id,
+                      entryKind: entry.entryKind,
+                      entryTypeLabel: entry.entryTypeLabel,
+                    });
                   <TableRow key={`${entry.entryKind}-${entry.id}`}>
                     <TableCell>{entry.entryTypeLabel}</TableCell>
                     <TableCell className="font-medium text-primary">
