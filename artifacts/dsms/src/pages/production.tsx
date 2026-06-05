@@ -75,7 +75,21 @@ const baseRateSchema = z
 function toApiBaseRate(value?: string) {
   return value ? Number(value) : null;
 }
+function getEndpoint(kind: EntryKind) {
+  switch (kind) {
+    case "production":
+      return "/api/production";
 
+    case "purchase":
+      return "/api/purchase";
+
+    case "sale-return":
+      return "/api/sale-return";
+
+    default:
+      throw new Error(`Unknown entry kind: ${kind}`);
+  }
+}
 function formatBaseRate(value: unknown) {
   if (value == null || value === "") return "-";
   const numeric = Number(value);
@@ -135,6 +149,9 @@ export default function Production() {
 
   const isLoading =
     isProductionLoading || isPurchaseLoading || isSaleReturnLoading;
+  console.log("RAW PRODUCTION", productionEntries?.[0]);
+  console.log("RAW PURCHASE", purchaseEntries?.[0]);
+  console.log("RAW SALE RETURN", saleReturnEntries?.[0]);
   const rows =
     mode === "production"
       ? (productionEntries ?? [])
@@ -400,8 +417,7 @@ function ProductionDialog({
   const updateMutation = useUpdateProduction();
   const stockInMutation = useMutation({
     mutationFn: (data: z.infer<typeof formSchema>) => {
-      const endpoint =
-        entryKind === "purchase" ? "/api/purchase" : "/api/sale-return";
+      const endpoint = getEndpoint(entryKind);
       const body = {
         date: currentDate,
         stockItemId: parseInt(data.stockItemId),
@@ -655,8 +671,7 @@ function DeleteStockInDialog({
   const deleteMutation = useDeleteProduction();
   const stockInDeleteMutation = useMutation({
     mutationFn: () => {
-      const endpoint =
-        entryKind === "purchase" ? "/api/purchase" : "/api/sale-return";
+      const endpoint = getEndpoint(entryKind);
       return apiRequest(`${endpoint}/${id}`, { method: "DELETE" });
     },
   });
