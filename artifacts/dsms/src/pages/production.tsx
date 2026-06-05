@@ -141,6 +141,15 @@ export default function Production() {
       : mode === "purchase"
         ? (purchaseEntries ?? [])
         : (saleReturnEntries ?? []);
+  console.log(
+    "MODE:",
+    mode,
+    rows?.map((r: any) => ({
+      id: r.id,
+      entryKind: r.entryKind,
+      item: r.stockItem?.itemCode,
+    })),
+  );
 
   return (
     <div className="space-y-6">
