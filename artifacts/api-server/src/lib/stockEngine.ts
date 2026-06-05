@@ -238,20 +238,20 @@ export async function getOpeningStock(
     issueProduction -
     dispatch;
 
-  console.log("OPENING STOCK DEBUG", {
-    stockItemId,
-    date,
-    baseQty,
-    baseDate,
-    production,
-    purchase,
-    saleReturn,
-    sale,
-    purchaseReturn,
-    issueProduction,
-    dispatch,
-    opening,
-  });
+  // console.log("OPENING STOCK DEBUG", {
+  //   stockItemId,
+  //   date,
+  //   baseQty,
+  //   baseDate,
+  //   production,
+  //   purchase,
+  //   saleReturn,
+  //   sale,
+  //   purchaseReturn,
+  //   issueProduction,
+  //   dispatch,
+  //   opening,
+  // });
 
   return opening;
   // return (

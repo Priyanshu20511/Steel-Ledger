@@ -135,6 +135,7 @@ export default function Production() {
         },
       },
     );
+  console.log("RAW PRODUCTION", productionEntries);
 
   const { data: purchaseEntries, isLoading: isPurchaseLoading } = useQuery({
     queryKey: stockInQueryKey("purchase", dateStr),
@@ -383,6 +384,12 @@ function ProductionDialog({
   triggerLabel?: string;
   dialogTitle?: string;
 }) {
+  console.log("PRODUCTION DIALOG", {
+    mode,
+    entryKind,
+    entryId: entry?.id,
+    entry,
+  });
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -434,7 +441,12 @@ function ProductionDialog({
           body: JSON.stringify(body),
         });
       }
-
+      console.log("EDIT DEBUG", {
+        entryKind,
+        endpoint,
+        entry,
+        id: entry?.id,
+      });
       return apiRequest(`${endpoint}/${entry!.id}`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -488,7 +500,8 @@ function ProductionDialog({
         toast({ title: "Production entry added" });
       } else if (entry) {
         await updateMutation.mutateAsync({
-          params: { id: entry.id },
+          // params: { id: entry.id },
+          id: entry.id,
           data: {
             quantity: data.quantity,
             baseRate: toApiBaseRate(data.baseRate),
