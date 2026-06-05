@@ -149,24 +149,21 @@ export default function Production() {
 
   const isLoading =
     isProductionLoading || isPurchaseLoading || isSaleReturnLoading;
-  console.log("RAW PRODUCTION", productionEntries?.[0]);
-  console.log("RAW PURCHASE", purchaseEntries?.[0]);
-  console.log("RAW SALE RETURN", saleReturnEntries?.[0]);
+
+  const productionRows: StockInEntry[] = (productionEntries ?? []).map(
+    (entry: any) => ({
+      ...entry,
+      entryKind: "production",
+      entryTypeLabel: "Production",
+    }),
+  );
+
   const rows =
     mode === "production"
-      ? (productionEntries ?? [])
+      ? productionRows
       : mode === "purchase"
         ? (purchaseEntries ?? [])
         : (saleReturnEntries ?? []);
-  console.log(
-    "MODE:",
-    mode,
-    rows?.map((r: any) => ({
-      id: r.id,
-      entryKind: r.entryKind,
-      item: r.stockItem?.itemCode,
-    })),
-  );
 
   return (
     <div className="space-y-6">
@@ -262,7 +259,8 @@ export default function Production() {
                 <TableHead>Type</TableHead>
                 <TableHead>Item Code</TableHead>
                 <TableHead>Category / Size</TableHead>
-                <TableHead>Party Name</TableHead>
+                {/*<TableHead>Party Name</TableHead>*/}
+                {mode !== "production" && <TableHead>Party Name</TableHead>}
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead className="text-right">Base Rate</TableHead>
                 <TableHead>Remarks</TableHead>
@@ -324,7 +322,10 @@ export default function Production() {
                     <TableCell>
                       {entry.stockItem?.category} - {entry.stockItem?.size}
                     </TableCell>
-                    <TableCell>{entry.partyName || "-"}</TableCell>
+                    {/*<TableCell>{entry.partyName || "-"}</TableCell>*/}
+                    {mode !== "production" && (
+                      <TableCell>{entry.partyName || "-"}</TableCell>
+                    )}
                     <TableCell className="text-right font-mono text-emerald-600 font-medium">
                       +{entry.quantity.toLocaleString()} {entry.stockItem?.unit}
                     </TableCell>
@@ -459,12 +460,17 @@ function ProductionDialog({
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      if (entryKind !== "production" && !data.partyName?.trim()) {
+      // if (entryKind !== "production" && !data.partyName?.trim()) {
+      if (
+        (entryKind === "purchase" || entryKind === "sale-return") &&
+        !data.partyName?.trim()
+      ) {
         form.setError("partyName", { message: "Party name is required" });
         return;
       }
 
-      if (entryKind !== "production") {
+      // if (entryKind !== "production") {
+      if (entryKind === "purchase" || entryKind === "sale-return") {
         await stockInMutation.mutateAsync(data);
         toast({
           title: `${triggerLabel} entry ${mode === "create" ? "added" : "updated"}`,
@@ -520,10 +526,19 @@ function ProductionDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
+          {/*<DialogTitle>
             {mode === "create"
               ? (dialogTitle ?? "Add Production Entry")
               : "Edit Production"}
+          </DialogTitle>*/}
+          <DialogTitle>
+            {mode === "create"
+              ? (dialogTitle ?? "Add Production Entry")
+              : entryKind === "purchase"
+                ? "Edit Purchase"
+                : entryKind === "sale-return"
+                  ? "Edit Sale Return"
+                  : "Edit Production"}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -558,7 +573,8 @@ function ProductionDialog({
               />
             )}
 
-            {entryKind !== "production" && (
+            {/*{entryKind !== "production" && (*/}
+            {(entryKind === "purchase" || entryKind === "sale-return") && (
               <FormField
                 control={form.control}
                 name="partyName"
@@ -718,8 +734,8 @@ function DeleteStockInDialog({
         </DialogHeader>
         <div className="py-4">
           <p>
-            Are you sure you want to delete this production entry? This action
-            cannot be undone.
+            Are you sure you want to delete this entry? This action cannot be
+            undone.
           </p>
         </div>
         <div className="flex justify-end gap-2">
