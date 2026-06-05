@@ -141,12 +141,13 @@ export default function Production() {
     queryKey: stockInQueryKey("purchase", dateStr),
     queryFn: () => apiRequest<StockInEntry[]>(`/api/purchase?date=${dateStr}`),
   });
-
+  console.log("PURCHASE ENTRIES", purchaseEntries);
   const { data: saleReturnEntries, isLoading: isSaleReturnLoading } = useQuery({
     queryKey: stockInQueryKey("sale-return", dateStr),
     queryFn: () =>
       apiRequest<StockInEntry[]>(`/api/sale-return?date=${dateStr}`),
   });
+  console.log("SALE RETURN ENTRIES", saleReturnEntries);
 
   const isLoading =
     isProductionLoading || isPurchaseLoading || isSaleReturnLoading;
