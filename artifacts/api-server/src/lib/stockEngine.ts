@@ -33,7 +33,7 @@ async function sumBeforeDate(
     .where(
       and(
         eq(table.stockItemId, stockItemId),
-        sql`${table.date} > ${baseDate}`,
+        sql`${table.date} >= ${baseDate}`,
         lt(table.date, date),
       ),
     );
